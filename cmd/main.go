@@ -1,31 +1,23 @@
 package main
 
 import (
+	"context"
 	"log/slog"
+	"os"
+	"os/signal"
+	"syscall"
 
-	"github.com/ArataEM/message-service/internal/config"
-	"github.com/ArataEM/message-service/internal/db"
-	"github.com/ArataEM/message-service/internal/server"
-	"github.com/go-sql-driver/mysql"
+	"github.com/ArataEM/message-service/application"
 )
 
 func main() {
-	db, err := db.NewMysqlStorage(mysql.Config{
-		User:                 config.Envs.DBUser,
-		Passwd:               config.Envs.DBPassword,
-		Addr:                 config.Envs.DBAddress,
-		DBName:               config.Envs.DBName,
-		Net:                  "tcp",
-		AllowNativePasswords: true,
-		ParseTime:            true,
-	})
-	if err != nil {
-		slog.Error(err.Error())
-		panic(1)
-	}
+	app := application.New()
 
-	server := server.NewServer(":8080", db)
-	if err := server.Run(); err != nil {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+
+	err := app.Start(ctx)
+	if err != nil {
 		slog.Error(err.Error())
 	}
 }
