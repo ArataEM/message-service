@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -24,6 +25,7 @@ func (m *Message) Create(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
+		slog.Error(fmt.Sprintf("Error decoding: %s", err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
