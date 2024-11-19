@@ -49,7 +49,7 @@ func (a *App) Start(ctx context.Context) error {
 
 	slog.Info("Starting server")
 
-	ch := make(chan error)
+	ch := make(chan error, 1)
 
 	go func() {
 		err := server.ListenAndServe()
@@ -58,6 +58,8 @@ func (a *App) Start(ctx context.Context) error {
 		}
 		close(ch)
 	}()
+
+	slog.Info(fmt.Sprintf("Server started on port %d", a.config.ServerPort))
 
 	select {
 	case err = <-ch:
