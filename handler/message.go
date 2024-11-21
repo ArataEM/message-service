@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,8 +16,16 @@ import (
 	"github.com/google/uuid"
 )
 
+type Repo interface {
+	Insert(ctx context.Context, message model.Message) error
+	Get(ctx context.Context, id uuid.UUID) (model.Message, error)
+	Delete(ctx context.Context, id uuid.UUID) error
+	Update(ctx context.Context, message model.Message) error
+	FindAll(ctx context.Context, page message.FindAllPage) (message.FindResult, error)
+}
+
 type Message struct {
-	Repo *message.RedisRepo
+	Repo Repo
 }
 
 func (m *Message) Create(w http.ResponseWriter, r *http.Request) {
