@@ -31,8 +31,11 @@ func New(config Config) *App {
 
 func (a *App) Start(ctx context.Context) error {
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", a.config.ServerPort),
-		Handler: a.router,
+		Addr:         fmt.Sprintf(":%d", a.config.ServerPort),
+		Handler:      a.router,
+		IdleTimeout:  120 * time.Second,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 5 * time.Second,
 	}
 
 	err := a.rdb.Ping(ctx).Err()
