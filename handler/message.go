@@ -27,7 +27,7 @@ func (m *Message) Create(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
-		slog.Error(fmt.Sprintf("Error decoding: %s", err))
+		slog.Warn(fmt.Sprintf("Error decoding: %s", err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -35,8 +35,8 @@ func (m *Message) Create(w http.ResponseWriter, r *http.Request) {
 	now := time.Now().UTC()
 	id, err := uuid.NewV7()
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
 		slog.Error("error generating UUID for new message")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	message := model.Message{
@@ -48,15 +48,15 @@ func (m *Message) Create(w http.ResponseWriter, r *http.Request) {
 
 	err = m.Repo.Insert(r.Context(), message)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
 		slog.Error("error inserting message")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	res, err := json.Marshal(message)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
 		slog.Error("error marshaling message")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -74,6 +74,7 @@ func (m *Message) List(w http.ResponseWriter, r *http.Request) {
 	const bitSize = 64
 	cursor, err := strconv.ParseUint(cursorStr, decimal, bitSize)
 	if err != nil {
+		slog.Warn("failed cursor parse")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -84,8 +85,8 @@ func (m *Message) List(w http.ResponseWriter, r *http.Request) {
 		Size:   size,
 	})
 	if err != nil {
-		slog.Error("failed to find all: ", "error", err.Error())
-		w.WriteHeader(http.StatusBadRequest)
+		slog.Error(fmt.Sprintf("failed to find all: %s", err))
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -98,7 +99,7 @@ func (m *Message) List(w http.ResponseWriter, r *http.Request) {
 	response.Next = res.Cursor
 	data, err := json.Marshal(response)
 	if err != nil {
-		slog.Error("failed to marshall: ", "error", err.Error())
+		slog.Warn(fmt.Sprintf("failed to marshall: %s", err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -109,7 +110,7 @@ func (m *Message) List(w http.ResponseWriter, r *http.Request) {
 func (m *Message) GetById(w http.ResponseWriter, r *http.Request) {
 	idParam, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		slog.Error("failed uuid parse")
+		slog.Warn("failed uuid parse")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -138,7 +139,7 @@ func (m *Message) UpdateById(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
-		slog.Error(fmt.Sprintf("Error decoding: %s", err))
+		slog.Warn(fmt.Sprintf("Error decoding: %s", err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -151,7 +152,7 @@ func (m *Message) UpdateById(w http.ResponseWriter, r *http.Request) {
 	}
 	idParam, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		slog.Error("failed uuid parse")
+		slog.Warn("failed uuid parse")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
