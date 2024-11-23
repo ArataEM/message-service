@@ -157,15 +157,15 @@ func (r *RedisRepo) FindAll(ctx context.Context, page FindAllPage) (FindResult, 
 	}, nil
 }
 
-func (r *RedisRepo) CheckConnection(ctx context.Context) error {
-	err := r.Client.Ping(ctx)
+func (r *RedisRepo) Ping(ctx context.Context) error {
+	err := r.Client.Ping(ctx).Err()
 	if err != nil {
-		return fmt.Errorf("failed to connect to redis: %w", err.Err())
+		return fmt.Errorf("failed to connect to redis: %w", err)
 	}
 	return nil
 }
 
-func (r *RedisRepo) CloseConenction() error {
+func (r *RedisRepo) Close() error {
 	err := r.Client.Close()
 	if err != nil {
 		return fmt.Errorf("failed to close redis: %w", err)

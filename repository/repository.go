@@ -14,8 +14,8 @@ type Repo interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	Update(ctx context.Context, message model.Message) error
 	FindAll(ctx context.Context, page FindAllPage) (FindResult, error)
-	CheckConnection(ctx context.Context) error
-	CloseConenction() error
+	Ping(ctx context.Context) error
+	Close() error
 }
 
 type FindAllPage struct {

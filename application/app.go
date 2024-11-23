@@ -37,13 +37,13 @@ func (a *App) Start(ctx context.Context) error {
 		WriteTimeout: 5 * time.Second,
 	}
 
-	err := a.rdb.CheckConnection(ctx)
+	err := a.rdb.Ping(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to connect to repository: %w", err)
 	}
 
 	defer func() {
-		err := a.rdb.CloseConenction()
+		err := a.rdb.Close()
 		if err != nil {
 			fmt.Println("failed to close connection: ", err)
 		}
