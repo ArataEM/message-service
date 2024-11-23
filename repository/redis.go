@@ -1,4 +1,4 @@
-package redis
+package repository
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 
 	"github.com/ArataEM/message-service/config"
 	"github.com/ArataEM/message-service/model"
-	"github.com/ArataEM/message-service/repository"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
@@ -64,7 +63,7 @@ func (r *RedisRepo) Get(ctx context.Context, id uuid.UUID) (model.Message, error
 
 	value, err := r.Client.Get(ctx, key).Result()
 	if errors.Is(err, redis.Nil) {
-		return model.Message{}, repository.ErrNotExist
+		return model.Message{}, ErrNotExist
 	} else if err != nil {
 		return model.Message{}, fmt.Errorf("error getting message %s: %w", id, err)
 	}
@@ -85,7 +84,7 @@ func (r *RedisRepo) Delete(ctx context.Context, id uuid.UUID) error {
 
 	err := txn.Del(ctx, key).Err()
 	if errors.Is(err, redis.Nil) {
-		return repository.ErrNotExist
+		return ErrNotExist
 	} else if err != nil {
 		return fmt.Errorf("error deleting message %s: %w", id, err)
 	}
@@ -113,7 +112,7 @@ func (r *RedisRepo) Update(ctx context.Context, message model.Message) error {
 
 	err = r.Client.SetXX(ctx, key, string(data), 0).Err()
 	if errors.Is(err, redis.Nil) {
-		return repository.ErrNotExist
+		return ErrNotExist
 	} else if err != nil {
 		return fmt.Errorf("error updating message %s: %w", message.Id, err)
 	}
@@ -121,23 +120,23 @@ func (r *RedisRepo) Update(ctx context.Context, message model.Message) error {
 	return nil
 }
 
-func (r *RedisRepo) FindAll(ctx context.Context, page repository.FindAllPage) (repository.FindResult, error) {
+func (r *RedisRepo) FindAll(ctx context.Context, page FindAllPage) (FindResult, error) {
 	res := r.Client.SScan(ctx, messagesSetName, page.Offset, "*", int64(page.Size))
 
 	keys, cursor, err := res.Result()
 	if err != nil {
-		return repository.FindResult{}, fmt.Errorf("failed to list messages: %w", err)
+		return FindResult{}, fmt.Errorf("failed to list messages: %w", err)
 	}
 
 	if len(keys) == 0 {
-		return repository.FindResult{
+		return FindResult{
 			Messages: []model.Message{},
 		}, nil
 	}
 
 	messagesData, err := r.Client.MGet(ctx, keys...).Result()
 	if err != nil {
-		return repository.FindResult{}, fmt.Errorf("failed to get list: %w", err)
+		return FindResult{}, fmt.Errorf("failed to get list: %w", err)
 	}
 
 	messages := make([]model.Message, len(messagesData))
@@ -147,12 +146,12 @@ func (r *RedisRepo) FindAll(ctx context.Context, page repository.FindAllPage) (r
 
 		err := json.Unmarshal([]byte(v), &message)
 		if err != nil {
-			return repository.FindResult{}, fmt.Errorf("failed to decode message: %w", err)
+			return FindResult{}, fmt.Errorf("failed to decode message: %w", err)
 		}
 		messages[k] = message
 	}
 
-	return repository.FindResult{
+	return FindResult{
 		Messages: messages,
 		Cursor:   cursor,
 	}, nil

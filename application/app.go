@@ -9,7 +9,6 @@ import (
 
 	"github.com/ArataEM/message-service/config"
 	"github.com/ArataEM/message-service/repository"
-	"github.com/ArataEM/message-service/repository/redis"
 )
 
 type App struct {
@@ -20,7 +19,7 @@ type App struct {
 
 func New(config config.Config) *App {
 	app := &App{
-		rdb:    redis.NewRedisRepo(config),
+		rdb:    repository.NewRedisRepo(config),
 		config: config,
 	}
 
