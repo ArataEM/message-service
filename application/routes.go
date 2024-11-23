@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/ArataEM/message-service/handler"
-	"github.com/ArataEM/message-service/repository/message"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -25,9 +24,7 @@ func (a *App) loadRoutes() {
 
 func (a *App) loadMessageRoutes(router chi.Router) {
 	messageHandler := &handler.Message{
-		Repo: &message.RedisRepo{
-			Client: a.rdb,
-		},
+		Repo: a.rdb,
 	}
 
 	router.Get("/", messageHandler.List)

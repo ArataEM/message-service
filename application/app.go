@@ -7,20 +7,20 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/redis/go-redis/v9"
+	"github.com/ArataEM/message-service/config"
+	"github.com/ArataEM/message-service/repository"
+	"github.com/ArataEM/message-service/repository/redis"
 )
 
 type App struct {
 	router http.Handler
-	rdb    *redis.Client
-	config Config
+	rdb    repository.Repo
+	config config.Config
 }
 
-func New(config Config) *App {
+func New(config config.Config) *App {
 	app := &App{
-		rdb: redis.NewClient(&redis.Options{
-			Addr: config.RedisAddress,
-		}),
+		rdb:    redis.NewRedisRepo(config),
 		config: config,
 	}
 
@@ -38,15 +38,15 @@ func (a *App) Start(ctx context.Context) error {
 		WriteTimeout: 5 * time.Second,
 	}
 
-	err := a.rdb.Ping(ctx).Err()
+	err := a.rdb.CheckConnection(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to connect to redis: %w", err)
+		return fmt.Errorf("failed to connect to repository: %w", err)
 	}
 
 	defer func() {
-		err := a.rdb.Close()
+		err := a.rdb.CloseConenction()
 		if err != nil {
-			fmt.Println("failed to close redis", err)
+			fmt.Println("failed to close connection: ", err)
 		}
 	}()
 

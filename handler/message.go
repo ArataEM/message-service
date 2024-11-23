@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,21 +10,13 @@ import (
 	"time"
 
 	"github.com/ArataEM/message-service/model"
-	"github.com/ArataEM/message-service/repository/message"
+	"github.com/ArataEM/message-service/repository"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
-type Repo interface {
-	Insert(ctx context.Context, message model.Message) error
-	Get(ctx context.Context, id uuid.UUID) (model.Message, error)
-	Delete(ctx context.Context, id uuid.UUID) error
-	Update(ctx context.Context, message model.Message) error
-	FindAll(ctx context.Context, page message.FindAllPage) (message.FindResult, error)
-}
-
 type Message struct {
-	Repo Repo
+	Repo repository.Repo
 }
 
 func (m *Message) Create(w http.ResponseWriter, r *http.Request) {
@@ -88,7 +79,7 @@ func (m *Message) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	const size = 50
-	res, err := m.Repo.FindAll(r.Context(), message.FindAllPage{
+	res, err := m.Repo.FindAll(r.Context(), repository.FindAllPage{
 		Offset: cursor,
 		Size:   size,
 	})
@@ -123,7 +114,7 @@ func (m *Message) GetById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	messageRes, err := m.Repo.Get(r.Context(), idParam)
-	if errors.Is(err, message.ErrNotExist) {
+	if errors.Is(err, repository.ErrNotExist) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -166,7 +157,7 @@ func (m *Message) UpdateById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	messageRes, err := m.Repo.Get(r.Context(), idParam)
-	if errors.Is(err, message.ErrNotExist) {
+	if errors.Is(err, repository.ErrNotExist) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -196,7 +187,7 @@ func (m *Message) DeleteById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = m.Repo.Delete(r.Context(), idParam)
-	if errors.Is(err, message.ErrNotExist) {
+	if errors.Is(err, repository.ErrNotExist) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	} else if err != nil {

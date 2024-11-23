@@ -8,10 +8,11 @@ import (
 	"syscall"
 
 	"github.com/ArataEM/message-service/application"
+	"github.com/ArataEM/message-service/config"
 )
 
 func main() {
-	app := application.New(application.LoadConfig())
+	app := application.New(config.LoadConfig())
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
