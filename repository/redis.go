@@ -44,7 +44,10 @@ func (r *RedisRepo) Insert(ctx context.Context, message model.Message) error {
 		return fmt.Errorf("error creating message %s: %w", message.Id, err)
 	}
 
-	err = txn.SAdd(ctx, messagesSetName, key).Err()
+	err = txn.ZAdd(ctx, messagesSetName, redis.Z{
+		Score:  float64(message.CreatedAt.Unix()),
+		Member: key,
+	}).Err()
 	if err != nil {
 		txn.Discard()
 		return fmt.Errorf("error adding message %s to set: %w", message.Id, err)
@@ -89,7 +92,7 @@ func (r *RedisRepo) Delete(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("error deleting message %s: %w", id, err)
 	}
 
-	err = txn.SRem(ctx, messagesSetName, key).Err()
+	err = txn.ZRem(ctx, messagesSetName, key).Err()
 	if err != nil {
 		txn.Discard()
 		return fmt.Errorf("error deleting message %s from set: %w", id, err)
@@ -121,9 +124,9 @@ func (r *RedisRepo) Update(ctx context.Context, message model.Message) error {
 }
 
 func (r *RedisRepo) FindAll(ctx context.Context, page FindAllPage) (FindResult, error) {
-	res := r.Client.SScan(ctx, messagesSetName, page.Offset, "*", int64(page.Size))
+	res := r.Client.ZRange(ctx, messagesSetName, int64(page.Offset), int64(page.Offset)+int64(page.Size)-1)
 
-	keys, cursor, err := res.Result()
+	keys, err := res.Result()
 	if err != nil {
 		return FindResult{}, fmt.Errorf("failed to list messages: %w", err)
 	}
@@ -153,7 +156,7 @@ func (r *RedisRepo) FindAll(ctx context.Context, page FindAllPage) (FindResult, 
 
 	return FindResult{
 		Messages: messages,
-		Cursor:   cursor,
+		Cursor:   page.Offset + page.Size,
 	}, nil
 }
 

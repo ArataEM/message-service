@@ -44,6 +44,7 @@ func (m *Message) Create(w http.ResponseWriter, r *http.Request) {
 		UserId:    body.UserId,
 		Text:      body.Text,
 		CreatedAt: &now,
+		UpdatedAt: &now,
 	}
 
 	err = m.Repo.Insert(r.Context(), message)
