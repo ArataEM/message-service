@@ -112,7 +112,7 @@ func (m *Message) GetById(w http.ResponseWriter, r *http.Request) {
 	idParam, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		slog.Warn("failed uuid parse")
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "failed uuid parse", http.StatusBadRequest)
 		return
 	}
 	messageRes, err := m.Repo.Get(r.Context(), idParam)
@@ -135,7 +135,7 @@ func (m *Message) GetById(w http.ResponseWriter, r *http.Request) {
 
 func (m *Message) UpdateById(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Text string `json:"text,omitempty"`
+		Text string `json:"text"`
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&body)
@@ -147,14 +147,13 @@ func (m *Message) UpdateById(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(body.Text)
 	if body.Text == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Field \"text\" cannot be empty"))
+		http.Error(w, "Field \"text\" cannot be empty", http.StatusBadRequest)
 		return
 	}
 	idParam, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		slog.Warn("failed uuid parse")
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "failed uuid parse", http.StatusBadRequest)
 		return
 	}
 
@@ -185,7 +184,7 @@ func (m *Message) DeleteById(w http.ResponseWriter, r *http.Request) {
 	idParam, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		slog.Error("failed uuid parse")
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "failed uuid parse", http.StatusBadRequest)
 		return
 	}
 	err = m.Repo.Delete(r.Context(), idParam)
